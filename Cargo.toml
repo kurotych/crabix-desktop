@@ -1,0 +1,18 @@
+[package]
+name = "crabix-desktop"
+version = "0.1.0"
+edition = "2021"
+keywords = ["markdown"]
+description = "Markdown rendering with native Desktop app"
+license = "MIT"
+repository = "https://github.com/kurotych/crabix-desktop"
+
+[dependencies]
+dioxus = { version = "0.3.1" } 
+dioxus-desktop = { version = "0.3.0" } 
+markdown-it = { version = "0.4.0", features = ["linkify", "syntect"]}
+
+[profile.release]
+opt-level = "z"  # Optimize for size.
+strip = true
+lto = true
