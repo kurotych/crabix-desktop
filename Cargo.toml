@@ -8,8 +8,10 @@ license = "MIT"
 repository = "https://github.com/kurotych/crabix-desktop"
 
 [dependencies]
-dioxus = { version = "0.3.1" } 
-dioxus-desktop = { version = "0.3.0" } 
+fermi = { git = "https://github.com/dioxuslabs/dioxus", branch = "master" }
+dioxus-desktop = { git = "https://github.com/dioxuslabs/dioxus", branch = "master" }
+dioxus = { git = "https://github.com/dioxuslabs/dioxus", branch = "master" }
+tokio = { version = "1.24", features = ["net"] }
 markdown-it = { version = "0.4.0", features = ["linkify", "syntect"]}
 
 [profile.release]
