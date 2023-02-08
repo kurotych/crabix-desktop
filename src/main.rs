@@ -14,7 +14,7 @@ use std::{env, fs, str};
 use tokio::net::UnixListener;
 
 static MARKDOWN_CONTENT: Atom<String> = |_| "".to_string();
-static SOURCE_FOCUS_LINE: Atom<u32> = |_| 0;
+static SOURCE_FOCUS_LINE: Atom<u32> = |_| 1;
 
 struct AppProps {
     markdown_path: String,
@@ -46,6 +46,7 @@ pub fn Markdown(cx: Scope<'a>) -> Element {
     log::trace!("Markdown parsed");
 
     let ss = Spos::find(*source_line, &spos_ext.sposes);
+    let cs = *source_line;
     log::trace!("find spos result: {:?}", ss);
 
     let eval = dioxus_desktop::use_eval(cx).clone();
@@ -53,8 +54,33 @@ pub fn Markdown(cx: Scope<'a>) -> Element {
     if let Some(s) = ss {
         cx.push_future(async move {
             let template = format!(
-            "document.querySelector(`[data-spos='{}-{}']`).scrollIntoView({{behavior: 'smooth'}})",
-            s.start_line, s.end_line);
+                r#"
+            function calcOffset(height, spos_start, spos_end, current_pos) {{
+                let steps = spos_end - spos_start;
+                if (steps == 0) return 0;
+                let step_value = height / steps;
+                return (current_pos - spos_start) * step_value
+            }}
+
+            function scrollToElement(element) {{
+              const rect = element.getBoundingClientRect();
+              const elementTop = rect.top + window.pageYOffset;
+              const elementMiddle = elementTop - (window.innerHeight / 2);
+              const offset = calcOffset(rect.height, {spos_start}, {spos_end}, {current_pos})
+
+              window.scrollTo({{
+                  top: elementMiddle + offset,
+                  left: 0,
+                  behavior: 'smooth'
+              }});
+            }}
+            const element = document.querySelector(`[data-spos='{spos_start}-{spos_end}']`);
+            scrollToElement(element)
+            "#,
+                spos_start = s.start_line,
+                spos_end = s.end_line,
+                current_pos = cs
+            );
             eval(template);
         });
     }
@@ -90,7 +116,7 @@ fn spawn_unix_socket_listener(cx: &Scope<AppProps>) {
             loop {
                 match listener.accept().await {
                     Ok((stream, _addr)) => loop {
-                        log::info!("Client connection accepted");
+                        log::trace!("Client connection accepted");
                         let res = stream.readable().await;
                         if res.is_ok() {
                             match stream.try_read(&mut msg) {
@@ -105,7 +131,7 @@ fn spawn_unix_socket_listener(cx: &Scope<AppProps>) {
 
                                     setContent(contentt[1..].to_string());
                                     setFocusLine(number.parse::<u32>().unwrap());
-                                    log::info!("Connection closed");
+                                    log::trace!("Connection closed");
                                     content.clear();
                                     total_bytes = 0;
                                     break;
@@ -135,7 +161,7 @@ fn spawn_unix_socket_listener(cx: &Scope<AppProps>) {
 }
 
 fn app(cx: Scope<AppProps>) -> Element {
-    println!("Run root element!");
+    log::trace!("Run root element!");
     use_init_atom_root(cx);
     spawn_unix_socket_listener(&cx);
 
