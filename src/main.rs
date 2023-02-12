@@ -17,18 +17,21 @@ static MARKDOWN_CONTENT: Atom<String> = |_| "".to_string();
 static SOURCE_FOCUS_LINE: Atom<u32> = |_| 1;
 
 struct AppProps {
-    markdown_path: String,
+    markdown_path: Option<String>,
 }
 
 fn main() {
     SimpleLogger::new().with_colors(true).init().unwrap();
 
     let args: Vec<String> = env::args().collect();
+
+    let mut markdown_path = None;
+    if args.len() >= 2 {
+        markdown_path = Some(args.get(1).unwrap().to_string());
+    }
     dioxus_desktop::launch_with_props(
         app,
-        AppProps {
-            markdown_path: args.get(1).unwrap().to_string(),
-        },
+        AppProps { markdown_path },
         Config::default().with_custom_head(format!("<style>{}</style>", MARKDOWN_BODY_CSS)),
     );
 }
@@ -102,13 +105,11 @@ fn spawn_unix_socket_listener(cx: &Scope<AppProps>) {
     cx.spawn({
         let setContent = use_set(cx, MARKDOWN_CONTENT).clone();
         let setFocusLine = use_set(cx, SOURCE_FOCUS_LINE).clone();
-        // let desk = dc.clone();
-        let file_content: String = fs::read_to_string(&cx.props.markdown_path)
-            .unwrap()
-            .parse()
-            .unwrap();
 
-        setContent(file_content.clone());
+        if let Some(markdown_path) = &cx.props.markdown_path {
+            let file_content: String = fs::read_to_string(markdown_path).unwrap().parse().unwrap();
+            setContent(file_content.clone());
+        }
 
         // TODO read /proc/sys/net/core/wmem_max to set size of this slice
         let mut msg = vec![0; 1_000_000];
