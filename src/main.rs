@@ -32,7 +32,9 @@ fn main() {
     dioxus_desktop::launch_with_props(
         app,
         AppProps { markdown_path },
-        Config::default().with_custom_head(format!("<style>{}</style>", MARKDOWN_BODY_CSS)),
+        Config::default()
+            .with_custom_head(format!("<style>{}</style>", MARKDOWN_BODY_CSS))
+            .with_window(WindowBuilder::new().with_title("Crabix Desktop")),
     );
 }
 
@@ -111,7 +113,7 @@ fn spawn_unix_socket_listener(cx: &Scope<AppProps>) {
             setContent(file_content.clone());
         }
 
-        // TODO read /proc/sys/net/core/wmem_max to set size of this slice
+        // TODO Need to figure out max packet size
         let mut msg = vec![0; 1_000_000];
         let _ = fs::remove_file("/tmp/crabix");
         let listener = UnixListener::bind("/tmp/crabix").unwrap();
