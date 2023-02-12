@@ -52,6 +52,7 @@ pub fn Markdown(cx: Scope<'a>) -> Element {
     let eval = dioxus_desktop::use_eval(cx).clone();
 
     if let Some(s) = ss {
+        // Should be removed https://github.com/DioxusLabs/dioxus/issues/804
         cx.push_future(async move {
             let template = format!(
                 r#"
@@ -74,8 +75,11 @@ pub fn Markdown(cx: Scope<'a>) -> Element {
                   behavior: 'smooth'
               }});
             }}
-            const element = document.querySelector(`[data-spos='{spos_start}-{spos_end}']`);
-            scrollToElement(element)
+            setTimeout(function(){{
+                const element = document.querySelector(`[data-spos='{spos_start}-{spos_end}']`);
+                scrollToElement(element)
+            }}, 100);
+
             "#,
                 spos_start = s.start_line,
                 spos_end = s.end_line,
