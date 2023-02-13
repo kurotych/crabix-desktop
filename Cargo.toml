@@ -1,6 +1,6 @@
 [package]
 name = "crabix-desktop"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 keywords = ["markdown"]
 description = "Markdown rendering with native Desktop app"
@@ -8,9 +8,9 @@ license = "MIT"
 repository = "https://github.com/kurotych/crabix-desktop"
 
 [dependencies]
-fermi = { git = "https://github.com/dioxuslabs/dioxus", branch = "master" }
-dioxus-desktop = { git = "https://github.com/dioxuslabs/dioxus", branch = "master" }
-dioxus = { git = "https://github.com/dioxuslabs/dioxus", branch = "master" }
+fermi = "0.3.0"
+dioxus-desktop = "0.3.0"
+dioxus = "0.3.1"
 tokio = { version = "1.24", features = ["net"] }
 markdown-it = { version = "0.4.0", features = ["linkify", "syntect"]}
 simple_logger = "4.0.0"
