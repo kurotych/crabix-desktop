@@ -8,7 +8,7 @@ use markdown_it::plugins::html::html_block::HtmlBlock;
 use markdown_it::{MarkdownIt, Node};
 use std::cmp::min;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Spos {
     pub start_line: u32,
     pub end_line: u32,
@@ -50,6 +50,21 @@ impl Spos {
                     s.start_line.abs_diff(source_line),
                     s.end_line.abs_diff(source_line),
                 );
+            } else if (s.start_line.abs_diff(source_line) == closest_el_delta
+                || s.end_line.abs_diff(source_line) == closest_el_delta)
+                && closest_element.is_some()
+            {
+                // There are two competitors that have the same delta,
+                // So we choose an element, that have lower delta between its end_line and start_line
+                let closest_el = closest_element.unwrap();
+                let closest_el_diff = closest_el.end_line - closest_el.start_line;
+                let candidate_diff = s.end_line - s.start_line;
+                if candidate_diff < closest_el_diff {
+                    closest_element = Some(Spos {
+                        start_line: s.start_line,
+                        end_line: s.end_line,
+                    });
+                }
             }
         }
 
@@ -136,7 +151,7 @@ impl CoreRule for SyntaxPosRule {
                 } else if node.node_type.name == "markdown_it::plugins::html::html_block::HtmlBlock"
                 {
                     // HTML in markdown is pain in the ass
-                    // If html inline rendering has artifacts, try to remove this code 
+                    // If html inline rendering has artifacts, try to remove this code
                     if let Some(ss) = node.node_value.as_any().downcast_ref::<HtmlBlock>() {
                         let start_html_tag_index =
                             ss.content.chars().take_while(|c| *c != '<').count();
@@ -181,7 +196,10 @@ impl CoreRule for SyntaxPosRule {
                         panic!("downcast_ref for HtmlBlock is failed");
                     }
                 } else {
-                    if node.node_type.name == "markdown_it::parser::core::root::Root" || node.node_type.name == "markdown_it::parser::inline::builtin::skip_text::Text" {
+                    if node.node_type.name == "markdown_it::parser::core::root::Root"
+                        || node.node_type.name
+                            == "markdown_it::parser::inline::builtin::skip_text::Text"
+                    {
                         // root position quite clear. First line and last line :)
                         // Text is always inside higher html tag
                     } else {
@@ -204,7 +222,24 @@ impl CoreRule for SyntaxPosRule {
 
 #[cfg(test)]
 mod tests {
-    use crate::markdown_parser::MarkdownParser;
+    use crate::markdown_parser::{MarkdownParser, Spos};
+
+    fn spos(start_line: u32, end_line: u32) -> Spos {
+        Spos {
+            start_line,
+            end_line,
+        }
+    }
+
+    #[test]
+    fn spos_test() {
+        let sposes = vec![spos(3, 4), spos(4, 4), spos(6, 7)];
+        assert_eq!(Spos::find(5, &sposes).unwrap(), spos(4, 4));
+        assert_eq!(Spos::find(6, &sposes).unwrap(), spos(6, 7));
+
+        let sposes = vec![spos(4, 4), spos(3, 4), spos(6, 6)];
+        assert_eq!(Spos::find(5, &sposes).unwrap(), spos(4, 4));
+    }
 
     #[test]
     fn header_test() {
