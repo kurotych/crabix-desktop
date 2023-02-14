@@ -22,6 +22,8 @@ crabix-desktop README.md
 (terminal 1) crabix-desktop
 (terminal 2) python3 test.py
 ```
+### Neovim plugin
+The [crabix-desktop.nvim](https://github.com/kurotych/crabix-desktop.nvim) plugin supports **Live rendering** and **Live scrolling**
 
 ## Contributing
 
